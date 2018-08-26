@@ -453,7 +453,7 @@ class MosquittoClient(object):
             ("Master/7242/Session/Session-Stop", 2),
             ("Master/7242/Session/Session-Start", 2),
             ("Master/7242/Session/Session-Update", 2),
-            ("Master/7242/Session/Loss-Count", 2)
+            ("Master/7242/Session/Loss-Rate", 2)
         ]
 
         LOGGER.info('Subscribing to topic_list : %s ' % str(topic_list))
@@ -530,8 +530,9 @@ class MosquittoClient(object):
 
         message = json.loads(msg.payload)
 
-        if (message['LinkName'] == 'FastForward') or (message['LinkName'] == 'LoopBack'):
-            return
+        if ('LinkName' in message):
+            if (message['LinkName'] == 'FastForward') or (message['LinkName'] == 'LoopBack'):
+                return
 
         buffer.append(msg.payload)
 
