@@ -13,8 +13,11 @@ import json
 import logging
 import base64
 import os
+
 import tornado.ioloop
 import paho.mqtt.client as mqtt
+
+from collections import deque
 
 
 LOGGER = logging.getLogger("MosquittoClient")
@@ -28,6 +31,8 @@ READ = tornado.ioloop.IOLoop.READ
 ERROR = tornado.ioloop.IOLoop.ERROR
 
 WSclients = set()
+
+buffer = deque(maxlen=100)
 
 
 class MosquittoClient(object):
@@ -527,7 +532,9 @@ class MosquittoClient(object):
 
         if (message['LinkName'] == 'FastForward') or (message['LinkName'] == 'LoopBack'):
             return
-        
+
+        buffer.append(msg.payload)
+
         for socket in WSclients:
             socket.write_message(msg.payload)
 
@@ -539,6 +546,9 @@ class MosquittoClient(object):
 
     def remove_client(self, client):
         WSclients.remove(client)
+
+    def get_buffer(self):
+        return buffer
 
     def stop(self):
         """

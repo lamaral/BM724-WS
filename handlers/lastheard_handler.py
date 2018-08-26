@@ -6,7 +6,9 @@ class LastHeardHandler(tornado.websocket.WebSocketHandler):
         return True
 
     def open(self):
-        print("Opened new connection")
+        buffer = self.application.mqtt_client.get_buffer()
+        for entry in buffer:
+            self.write_message(entry)
         self.application.mqtt_client.add_client(self)
 
     def on_close(self):
