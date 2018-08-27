@@ -13,6 +13,7 @@ import json
 import logging
 import base64
 import os
+import msgpack
 
 import tornado.ioloop
 import paho.mqtt.client as mqtt
@@ -450,10 +451,11 @@ class MosquittoClient(object):
         LOGGER.info('Client : %s started Subscribing ' % self)
 
         topic_list = [
-            ("Master/7242/Session/Session-Stop", 2),
-            ("Master/7242/Session/Session-Start", 2),
-            ("Master/7242/Session/Session-Update", 2),
-            ("Master/7242/Session/Loss-Rate", 2)
+            # ("Master/7242/Session/Session-Stop", 2),
+            # ("Master/7242/Session/Session-Start", 2),
+            # ("Master/7242/Session/Session-Update", 2),
+            # ("Master/7242/Session/Loss-Rate", 2)
+            ("BRHeard/#", 1)
         ]
 
         LOGGER.info('Subscribing to topic_list : %s ' % str(topic_list))
@@ -526,18 +528,49 @@ class MosquittoClient(object):
 
         # pi('on_public_message')
 
-        LOGGER.debug('Received message with mid : %s from topic : %s with qos :  %s and retain = %s ' % (str(msg.mid), msg.topic, str(msg.qos), str(msg.payload)))
+        LOGGER.debug('Received message with mid : %s from topic : %s with qos :  %s and retain = %s ' % (str(msg.mid), msg.topic, str(msg.qos), str(msgpack.unpackb(msg.payload))))
 
-        message = json.loads(msg.payload)
+        payload = msgpack.unpackb(msg.payload, encoding='utf-8')
 
-        if ('LinkName' in message):
-            if (message['LinkName'] == 'FastForward') or (message['LinkName'] == 'LoopBack'):
-                return
+        message = {}
 
-        buffer.append(msg.payload)
+        message['Event'] = msg.topic.split("/")[1]
+        message['Network'] = payload[0]
+        message['Session'] = payload[1]
+        message['CreationTime'] = payload[2]
+        message['UpdateTime'] = payload[3]
+        message['LinkName'] = payload[4]
+        message['LinkKind'] = payload[5]
+        message['LinkID'] = payload[6]
+        message['LinkSlot'] = payload[7]
+        message['CallType'] = payload[8]
+        message['SourceID'] = payload[9]
+        message['DestinationID'] = payload[10]
+        message['Priority'] = payload[11]
+        message['Route'] = payload[12]
+        message['State'] = payload[13]
+        message['DataCount'] = payload[14]
+        message['SignalStrength'] = payload[15]
+        message['ErrorRatio'] = payload[16]
+        message['LossCount'] = payload[17]
+        message['TotalCount'] = payload[18]
+        message['ReflectorID'] = payload[19]
+        message['RepeaterCall'] = payload[20]
+        message['SourceCall'] = payload[21]
+        message['SourceName'] = payload[22]
+        message['DestinationCall'] = payload[23]
+        message['DestinationName'] = payload[24]
+        message['TalkerAlias'] = payload[25]
+
+        jsonmessage = json.dumps(message)
+
+        LOGGER.debug(jsonmessage)
+
+        if message['Event'] == 'Session-Start' or message['Event'] == 'Session-Stop':
+            buffer.append(jsonmessage)
 
         for socket in WSclients:
-            socket.write_message(msg.payload)
+            socket.write_message(jsonmessage)
 
         # pr('on_public_message')
 

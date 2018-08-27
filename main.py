@@ -8,13 +8,12 @@ import tornado.web
 import tornado.wsgi
 import tornado.concurrent
 import tornado.options
+import tornado.log
 
 from functools import partial
 
 from handlers.config_handler import ConfigHandler
 from handlers.index_handler import IndexHandler
-from handlers.search_handler import SearchHandler
-from handlers.query_handler import QueryHandler
 from handlers.lastheard_handler import LastHeardHandler
 
 from pubsub import MosquittoClient
@@ -32,17 +31,17 @@ def sig_handler(server, sig, frame):
             io_loop.add_timeout(now + 1, stop_loop, deadline)
         else:
             io_loop.stop()
-            logging.info('Shutdown finally')
+            tornado.log.app_log.info('Shutdown finally')
 
     def shutdown():
-        logging.info('Stopping MQTT client')
-        logging.info('Stopping http server')
+        tornado.log.app_log.info('Stopping MQTT client')
+        tornado.log.app_log.info('Stopping http server')
         server.stop()
-        logging.info('Will shutdown in %s seconds ...',
+        tornado.log.app_log.info('Will shutdown in %s seconds ...',
                      MAX_WAIT_SECONDS_BEFORE_SHUTDOWN)
         stop_loop(time.time() + MAX_WAIT_SECONDS_BEFORE_SHUTDOWN)
 
-    logging.warning('Caught signal: %s', sig)
+    tornado.log.app_log.warning('Caught signal: %s', sig)
     io_loop.add_callback_from_signal(shutdown)
 
     
@@ -51,8 +50,6 @@ def create_web_server():
     handlers = [
         (r"/", IndexHandler),
         (r"/lh", LastHeardHandler),
-        (r"/search", SearchHandler),
-        (r"/query", QueryHandler),
         (r"/static/(.*)", tornado.web.StaticFileHandler, {'path': 'static/'}),
     ]
 
@@ -71,7 +68,9 @@ if __name__ == '__main__':
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter(fmt='%(asctime)s - %(name)-15.15s - %(levelname)-7.7s - %(message)s'))
     logger = logging.getLogger()
+    logger.handlers = []
     logger.addHandler(handler)
+    logger.propagate = False
 
     # Cria a aplicacao
     web_app = create_web_server()
