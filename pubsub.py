@@ -33,7 +33,7 @@ ERROR = tornado.ioloop.IOLoop.ERROR
 
 WSclients = set()
 
-buffer = deque(maxlen=100)
+buffer = deque(maxlen=200)
 
 
 class MosquittoClient(object):
@@ -566,7 +566,7 @@ class MosquittoClient(object):
 
         LOGGER.debug(jsonmessage)
 
-        if message['Event'] == 'Session-Start' or message['Event'] == 'Session-Stop':
+        if message['Event'] == 'Session-Stop' or message['Event'] == 'Session-Start' or message['Event'] == 'Loss-Rate':
             buffer.append(jsonmessage)
 
         for socket in WSclients:
