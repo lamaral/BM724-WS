@@ -566,7 +566,7 @@ class MosquittoClient(object):
 
         LOGGER.debug(jsonmessage)
 
-        if message['Event'] == 'Session-Stop' or message['Event'] == 'Session-Start' or message['Event'] == 'Loss-Rate':
+        if message['Event'] == 'Session-Stop' or message['Event'] == 'Session-Start':
             buffer.append(jsonmessage)
 
         for socket in WSclients:
