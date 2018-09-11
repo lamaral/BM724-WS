@@ -266,11 +266,11 @@ class MosquittoClient(object):
         # print 'adding tornado handler now'
 
         if self._sock:
-
             # print 'self._sock is present, hence adding handler'
-
-            ioloop.add_handler(self._sock.fileno(), self._events_handler, events)
-
+            if self._sock.fileno() not in ioloop.handlers:
+                ioloop.add_handler(self._sock.fileno(), self._events_handler, events)
+            else:
+                ioloop.update_handler(self._sock.fileno(), events)
         else:
             LOGGER.warning('client socket is closed already')
 
@@ -294,14 +294,10 @@ class MosquittoClient(object):
         # print 'removing tornado handler now'
 
         if self._sock:
-
             # print 'self._sock is present, hence removing handler'
-
             ioloop.remove_handler(self._sock.fileno())
-
             # updating close state of ioloop
             self._ioloopClosed = True
-
         else:
             LOGGER.warning('client socket is closed already')
 
@@ -528,9 +524,13 @@ class MosquittoClient(object):
 
         # pi('on_public_message')
 
-        LOGGER.debug('Received message with mid : %s from topic : %s with qos :  %s and retain = %s ' % (str(msg.mid), msg.topic, str(msg.qos), str(msgpack.unpackb(msg.payload))))
+        try:
+            LOGGER.debug('Received message with mid : %s from topic : %s with qos :  %s and retain = %s ' % (str(msg.mid), msg.topic, str(msg.qos), str(msgpack.unpackb(msg.payload))))
+            payload = msgpack.unpackb(msg.payload, encoding='utf-8')
+        except UnicodeDecodeError:
+            LOGGER.warning('Error decoding message: %s' % msg.payload)
+            return
 
-        payload = msgpack.unpackb(msg.payload, encoding='utf-8')
 
         message = {}
 
