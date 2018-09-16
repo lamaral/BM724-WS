@@ -67,8 +67,6 @@ class MosquittoClient(object):
         self._ioloopClosed = False
         self._schedular = None
 
-        # pr('__init__')
-
     def _genid(self):
         """
         Method that generates unique clientids by calling base64.urlsafe_b64encode(os.urandom(32)).replace('=', 'e').
@@ -78,8 +76,6 @@ class MosquittoClient(object):
 
         """
 
-        # pi('_genid')
-
         return base64.urlsafe_b64encode(os.urandom(32)).decode().replace('=', 'e')
 
     def start(self):
@@ -88,8 +84,6 @@ class MosquittoClient(object):
         by using the connect method and staring the network loop.
 
         """
-
-        # pi('start')
 
         LOGGER.info('starting the mosquitto connection')
 
@@ -104,7 +98,6 @@ class MosquittoClient(object):
         if self._connection == 0:
             # Start paho-mqtt mosquitto Event/IO Loop
             LOGGER.info('Startig IOLoop for client : %s ' % self)
-
             self.start_ioloop()
 
             # Start schedular for keeping the mqtt connection opening by chekcing keepalive, and request/response with PINGREQ/PINGRESP
@@ -115,8 +108,6 @@ class MosquittoClient(object):
 
             LOGGER.warning('Connection for client :  %s  with broker Not Established ' % self)
 
-        # pr('start')
-
     def setup_connection(self):
         """
         Method to setup the extra options like username,password, will set, tls_set etc
@@ -124,11 +115,7 @@ class MosquittoClient(object):
 
         """
 
-        # pi('setup_connection')
-
         self._client = self.create_client()
-
-        # pr('setup_connection')
 
     def create_client(self):
         """
@@ -140,8 +127,6 @@ class MosquittoClient(object):
 
         """
 
-        # pi('create_client')
-
         return mqtt.Client(client_id=self._clientid, clean_session=self._clean_session)
 
     def setup_callbacks(self):
@@ -151,13 +136,9 @@ class MosquittoClient(object):
 
         """
 
-        # pi('setup_callbacks')
-
         self._client.on_connect = self.on_connect
         self._client.on_disconnect = self.on_disconnect
         self._client.on_message = self.on_message
-
-        # pr('setup_callbacks')
 
     def connect(self):
         """
@@ -172,8 +153,6 @@ class MosquittoClient(object):
 
         """
 
-        # pi('connect')
-
         if self._connecting:
             LOGGER.warning('Already connecting to MQTT Broker')
             return
@@ -182,12 +161,8 @@ class MosquittoClient(object):
 
         if self._connected:
             LOGGER.warning('Already connected to MQTT Broker')
-
         else:
             LOGGER.info('Connecting to MQTT Broker on %s:%d' % (self._host, self._port))
-
-            # pr('connect')
-
             return self._client.connect(host=self._host, port=self._port, keepalive=self._keepalive)
 
     def on_connect(self, client, userdata, flags, rc):
@@ -218,11 +193,8 @@ class MosquittoClient(object):
 
         """
 
-        # pi('on_connect')
-
         if self._connection == 0:
             self._connected = True
-
             LOGGER.info('Connection for client :  %s  with broker established, Return Code : %s ' % (client, str(rc)))
 
             # start subscribing to topics
@@ -230,10 +202,7 @@ class MosquittoClient(object):
 
         else:
             self._connecting = False
-
             LOGGER.warning('Connection for client :  %s  with broker Not Established, Return Code : %s ' % (client, str(rc)))
-
-        # pr('on_connect')
 
     def start_ioloop(self):
         """
@@ -255,8 +224,6 @@ class MosquittoClient(object):
 
         """
 
-        # pi('start_ioloop')
-
         # the socket conection of the present mqtt mosquitto client object
         self._sock = self._client.socket()
 
@@ -274,8 +241,6 @@ class MosquittoClient(object):
         else:
             LOGGER.warning('client socket is closed already')
 
-        # pr('start_ioloop')
-
     def stop_ioloop(self):
         """
         Method to stop ioloop for paho-mqtt mosquitto clients so that it cannot
@@ -285,8 +250,6 @@ class MosquittoClient(object):
         method removed the tornaod ioloop handler for this socket.
 
         """
-
-        # pi('stop_ioloop')
 
         self._sock = self._client.socket()
 
@@ -301,8 +264,6 @@ class MosquittoClient(object):
         else:
             LOGGER.warning('client socket is closed already')
 
-        # pr('stop_ioloop')
-
     def _events_handler(self, fd, events):
         """
         Handle IO/Event loop events, processing them.
@@ -314,10 +275,7 @@ class MosquittoClient(object):
 
         """
 
-        # pi('_events_handler')
-
         self._sock = self._client.socket()
-
         # print 'self._sock : ', self._sock
 
         if not self._sock:
@@ -339,8 +297,6 @@ class MosquittoClient(object):
         if events & ERROR:
             LOGGER.error('Error event for socket : %s and client : %s ' % (self._sock, self._client))
 
-        # pr('_events_handler')
-
     def start_schedular(self):
         """
         This method calls Tornado's PeriodicCallback to schedule a callback every few seconds,
@@ -348,8 +304,6 @@ class MosquittoClient(object):
         checking for keepalive value and by keep sending pingreq and pingresp to moqsuitto broker.
 
         """
-
-        # pi('start_schedular')
 
         LOGGER.info('Starting Scheduler for client : %s ' % self)
 
@@ -359,22 +313,16 @@ class MosquittoClient(object):
         # start the schedular
         self._schedular.start()
 
-        # pr('start_schedular')
-
     def stop_schedular(self):
         """
         This method calls stops the tornado's periodicCallback Schedular loop.
 
         """
 
-        # pi('stop_schedular')
-
         LOGGER.info('Stoping Scheduler for client : %s ' % self)
 
         # stop the schedular
         self._schedular.stop()
-
-        # pr('stop_schedular')
 
     def disconnect(self):
         """
@@ -383,8 +331,6 @@ class MosquittoClient(object):
         on_disconnect callback is called as a result of this method call.
 
         """
-
-        # pi('disconnect')
 
         if self._closing:
             LOGGER.warning('Connection for client :  %s  already disconnecting..' % self)
@@ -398,16 +344,12 @@ class MosquittoClient(object):
             else:
                 self._client.disconnect()
 
-        # pr('disconnect')
-
     def on_disconnect(self, client, userdata, rc):
         """
         This is a Callback method and is called when the client disconnects from
         the broker.
 
         """
-
-        # pi('on_disconnect')
 
         LOGGER.info('Connection for client :  %s  with broker cleanly disconnected with return code : %s ' % (client, str(rc)))
 
@@ -426,8 +368,6 @@ class MosquittoClient(object):
         if self._ioloopClosed:
             self._sock = None
 
-        # pr('on_disconnect')
-
     def subscribe(self):
         """
         This method sets up the mqtt client to start subscribing to topics by accepting a list of tuples
@@ -442,10 +382,7 @@ class MosquittoClient(object):
 
         """
 
-        # pi('subscribe')
-
         LOGGER.info('Client : %s started Subscribing ' % self)
-
         topic_list = [
             # ("Master/7242/Session/Session-Stop", 2),
             # ("Master/7242/Session/Session-Start", 2),
@@ -453,12 +390,8 @@ class MosquittoClient(object):
             # ("Master/7242/Session/Loss-Rate", 2)
             ("BRHeard/#", 1)
         ]
-
         LOGGER.info('Subscribing to topic_list : %s ' % str(topic_list))
-
         self._client.subscribe(topic_list)
-
-        # pr('subscribe')
 
     def unsubscribe(self, topic_list=None):
         """
@@ -471,13 +404,8 @@ class MosquittoClient(object):
 
         """
 
-        # pi('unsubscribe')
-
         LOGGER.info('clinet : %s started Unsubscribing ' % self)
-
         self._client.unsubscribe(topic_list)
-
-        # pr('unsubscribe')
 
     def publish(self, topic, msg=None, qos=2, retain=False):
         """
@@ -496,8 +424,6 @@ class MosquittoClient(object):
 
         """
 
-        # pi('publish')
-
         # LOGGER.info('Publishing message')
 
         # converting message to json, to pass the message(dict) in acceptable format (string)
@@ -507,8 +433,6 @@ class MosquittoClient(object):
             payload = json.dumps(msg, ensure_ascii=False)
 
         self._client.publish(topic=topic, payload=payload, qos=qos, retain=retain)
-
-        # pr('publish')
 
     def on_message(self, client, userdata, msg):
         """
@@ -521,8 +445,6 @@ class MosquittoClient(object):
         :type       mid:            string or json encoded string
 
         """
-
-        # pi('on_public_message')
 
         try:
             LOGGER.debug('Received message with mid : %s from topic : %s with qos :  %s and retain = %s ' % (str(msg.mid), msg.topic, str(msg.qos), str(msgpack.unpackb(msg.payload))))
@@ -572,8 +494,6 @@ class MosquittoClient(object):
         for socket in WSclients:
             socket.write_message(jsonmessage)
 
-        # pr('on_public_message')
-
     def add_client(self, client):
         if client not in WSclients:
             WSclients.add(client)
@@ -592,10 +512,5 @@ class MosquittoClient(object):
 
         """
 
-        # pi('stop')
-
         LOGGER.info('Stopping MosquittoClient object... : %s ' % self)
-
         self.disconnect()
-
-        # pr('stop')

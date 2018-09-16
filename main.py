@@ -76,7 +76,7 @@ if __name__ == '__main__':
     web_app = create_web_server()
 
     # Cria cliente MQTT
-    web_app.mqtt_client = MosquittoClient(host="bm.dvbrazil.com.br", clean_session=True)
+    web_app.mqtt_client = MosquittoClient(host=ConfigHandler.config["mqtt"]["host"], clean_session=True)
     web_app.mqtt_client.start()
 
     # Inicia servidor web
