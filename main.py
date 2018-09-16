@@ -22,24 +22,17 @@ MAX_WAIT_SECONDS_BEFORE_SHUTDOWN = 3
 
 
 # Graceful shutdown
-def sig_handler(server, sig, frame):
+def sig_handler(server, mqtt, sig, frame):
     io_loop = tornado.ioloop.IOLoop.instance()
-
-    def stop_loop(deadline):
-        now = time.time()
-        if now < deadline:
-            io_loop.add_timeout(now + 1, stop_loop, deadline)
-        else:
-            io_loop.stop()
-            tornado.log.app_log.info('Shutdown finally')
 
     def shutdown():
         tornado.log.app_log.info('Stopping MQTT client')
+        mqtt.stop()
         tornado.log.app_log.info('Stopping http server')
         server.stop()
         tornado.log.app_log.info('Will shutdown in %s seconds ...',
                      MAX_WAIT_SECONDS_BEFORE_SHUTDOWN)
-        stop_loop(time.time() + MAX_WAIT_SECONDS_BEFORE_SHUTDOWN)
+        io_loop.add_timeout(time.time() + MAX_WAIT_SECONDS_BEFORE_SHUTDOWN, io_loop.stop)
 
     tornado.log.app_log.warning('Caught signal: %s', sig)
     io_loop.add_callback_from_signal(shutdown)
@@ -84,8 +77,8 @@ if __name__ == '__main__':
     server.listen(ConfigHandler.config["http"]["bind_port"], address=ConfigHandler.config["http"]["bind_address"])
 
     # Adiciona handlers de sinal
-    signal.signal(signal.SIGTERM, partial(sig_handler, server))
-    signal.signal(signal.SIGINT, partial(sig_handler, server))
+    signal.signal(signal.SIGTERM, partial(sig_handler, server, web_app.mqtt_client))
+    signal.signal(signal.SIGINT, partial(sig_handler, server, web_app.mqtt_client))
 
     # Cria e starta o ioloop
     ioloop = tornado.ioloop.IOLoop.instance()
