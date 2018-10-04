@@ -48,8 +48,7 @@ def create_web_server():
 
     # Configurações da aplicação
     settings = dict(
-        # template_path='templates/'
-        # autoreload=True
+        autoreload=True
     )
 
     return tornado.web.Application(handlers, **settings)

@@ -62,9 +62,9 @@ class MosquittoClient(object):
         self._connection = None
         self._client = None
         self.websocket = None
-        self._subNo = 0
+        self._subno = 0
         self._sock = None
-        self._ioloopClosed = False
+        self._ioloopclosed = False
         self._schedular = None
 
     def _genid(self):
@@ -93,7 +93,6 @@ class MosquittoClient(object):
         # self._connection is the return code of the connection, success, failure, error. Success = 0
         self._connection = self.connect()
 
-        # print 'self._connection : ', self._connection
 
         if self._connection == 0:
             # Start paho-mqtt mosquitto Event/IO Loop
@@ -230,10 +229,7 @@ class MosquittoClient(object):
         # adding tornado iooloop handler
         events = READ | WRITE | ERROR
 
-        # print 'adding tornado handler now'
-
         if self._sock:
-            # print 'self._sock is present, hence adding handler'
             if self._sock.fileno() not in ioloop.handlers:
                 ioloop.add_handler(self._sock.fileno(), self._events_handler, events)
             else:
@@ -253,14 +249,12 @@ class MosquittoClient(object):
 
         self._sock = self._client.socket()
 
-        # # removing tornado iooloop handler
-        # print 'removing tornado handler now'
+        # removing tornado iooloop handler
 
         if self._sock:
-            # print 'self._sock is present, hence removing handler'
             ioloop.remove_handler(self._sock.fileno())
             # updating close state of ioloop
-            self._ioloopClosed = True
+            self._ioloopclosed = True
         else:
             LOGGER.warning('client socket is closed already')
 
@@ -276,20 +270,19 @@ class MosquittoClient(object):
         """
 
         self._sock = self._client.socket()
-        # print 'self._sock : ', self._sock
 
         if not self._sock:
             LOGGER.error('Received events on closed socket: %r', fd)
             return
 
         if events & WRITE:
-            # LOGGER.info('Received WRITE event')
+            LOGGER.debug('Received WRITE event')
 
             # handler write events by calling loop_read() method of paho-mqtt client
             self._client.loop_write()
 
         if events & READ:
-            # LOGGER.info('Received READ event')
+            LOGGER.debug('Received READ event')
 
             # handler write events by calling loop_read() method of paho-mqtt client
             self._client.loop_read()
@@ -365,7 +358,7 @@ class MosquittoClient(object):
         # stoppig shechular
         self.stop_schedular()
 
-        if self._ioloopClosed:
+        if self._ioloopclosed:
             self._sock = None
 
     def subscribe(self):
@@ -384,10 +377,6 @@ class MosquittoClient(object):
 
         LOGGER.info('Client : %s started Subscribing ' % self)
         topic_list = [
-            # ("Master/7242/Session/Session-Stop", 2),
-            # ("Master/7242/Session/Session-Start", 2),
-            # ("Master/7242/Session/Session-Update", 2),
-            # ("Master/7242/Session/Loss-Rate", 2)
             ("BRHeard/#", 1)
         ]
         LOGGER.info('Subscribing to topic_list : %s ' % str(topic_list))
